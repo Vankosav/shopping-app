@@ -84,7 +84,7 @@ router.post("/login", isLoggedOut, async (req, res, next) => {
         });
       }
      
-      User.findOne({ email })
+      User.findOne({ username })
       .then((user) => {
         // If the user isn't found, send an error message that user provided wrong credentials
         if (!user) {
