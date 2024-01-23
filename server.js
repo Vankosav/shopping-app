@@ -1,0 +1,19 @@
+const app = require("./app");
+
+
+const session = require('express-session');
+
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+app.use(session({
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: true,
+  }));
+
+// ℹ️ Sets the PORT for our app to have access to it. If no env has been set, we hard code it to 3000
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
