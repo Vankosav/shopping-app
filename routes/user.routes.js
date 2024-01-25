@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 bodyParser.urlencoded({ extended: false });
 
 const User = require("../models/User.model");
+const Profile = require("../models/Profile.model");
 
 
 
@@ -72,45 +73,52 @@ router.get("/login", isLoggedOut, (req, res, next) => {
 
 
 router.post("/login", isLoggedOut, async (req, res, next) => {
-    const {username, password} = req.body;
+    const { username, password } = req.body;
 
-    if(username === "" || password === ""){
+    if (username === "" || password === "") {
         res.render("login.hbs", { errorMessage: "Please fill in all the fields" });
         return;
-    } 
+    }
     if (password.length < 8) {
         return res.status(400).render("user/login", {
-          errorMessage: "Your password needs to be at least 8 characters long.",
+            errorMessage: "Your password needs to be at least 8 characters long.",
         });
-      }
-     
-      User.findOne({ username })
-      .then((user) => {
-        // If the user isn't found, send an error message that user provided wrong credentials
+    }
+
+    try {
+        const user = await User.findOne({ username });
+
+        // If the user isn't found, send an error message that the user provided wrong credentials
         if (!user) {
-          res
-            .status(400)
-            .render("user/login", { errorMessage: "Wrong credentials." });
-          return;
+            res.status(400).render("user/login", { errorMessage: "Wrong credentials." });
+            return;
         }
 
         req.session.currentUser = user.toObject();
         // Remove the password field
         delete req.session.currentUser.password;
-       
-         if (req.session.currentUser.profile) {
-           console.log(req.session.currentUser);
-          res.redirect(`/profile/profile-page?name=${user.name}}`);
-        } else {
-          console.log(req.session.currentUser.profile);
-          // if user has a profile redirecto /kitchen-overview
-          // if not to create-profile
-          res.redirect(`/profile/create-profile?name=${user.name}`);
-        }
-      })
 
-      .catch((err) => next(err)); // In this case, we send error handling to the error handling middleware.
-  }); 
+        console.log("User logged in:", req.session.currentUser);
+
+        const profile = await Profile.findOne({ user: user._id });
+
+        if (profile) {
+            console.log("Profile exists for the user");
+            req.session.currentUser.profile = profile;
+            res.redirect(`/profile/profile-page?id=${user._id}`);
+        } else {
+            console.log("Profile does not exist for the user");
+            res.redirect(`/profile/create-profile?name=${user.username}`);
+        }
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
+});
+
+
+
+
 
   router.get("/logout", isLoggedIn, (req, res) => {
     req.session.destroy((err) => {

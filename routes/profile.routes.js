@@ -69,26 +69,21 @@ router.get("/create-profile", isLoggedIn, async (req, res, next) => {
       res.send("Error");
     }
   });
-  
-router.get("/profile-page/:id", isLoggedIn, async (req, res, next) => {
+
+  router.get("/profile-page", isLoggedIn, async (req, res, next) => {
     try {
-      const userId = req.session.currentUser ? req.session.currentUser._id : null;
-  
-      if (!userId) {
-        // Handle the case where _id is not found in the session
-        res.send("User not found in session");
-        return;
-      }
-  
-      const user = await User.findById(req.session.currentUser._id);
-      const profile = await Profile.findOne({ user: req.session.currentUser._id });
-  
-      res.render("profile/profile-page", { user, profile, isLoggedIn: req.isLoggedIn });
+       // get the user profile from the database
+         const profile = await Profile.findOne({ user: req.session.currentUser._id });
+
+            if (!profile) {
+            res.send("Profile not found");
+            return;
+            }       
+            res.render("profile/profile-page", { profile, isLoggedIn: req.isLoggedIn });
     } catch (error) {
-      console.log(error);
-      res.send("Error");
-    }
-  } );
+        console.error(error);
+        res.send("Error");
+    }});
 
 
-  module.exports = router;
+module.exports = router;
